@@ -1,0 +1,35 @@
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+    volumes:
+        - ./mqtt-broker/config:/mosquitto/config
+
+  temperature-sensor:
+    build: ./temperature-sensor
+    depends_on:
+      - mqtt-broker
+
+  light-sensor:
+    build: ./light-sensor
+    depends_on:
+      - mqtt-broker
+
+  actuator-fan:
+    build: ./actuator-fan
+    depends_on:
+      - mqtt-broker
+
+  test:
+    build: ./test
+    depends_on:
+      - mqtt-broker
+
+  fastapi-app:
+    build: ./fastapi-app
+    ports:
+        - "8000:8000"
+    depends_on:
+      - mqtt-broker
