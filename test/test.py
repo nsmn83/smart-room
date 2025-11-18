@@ -15,11 +15,6 @@ logger = logging.getLogger("Lamp")
 def on_connect(client, userdata, flags, reason_code, properties):
     logger.info(f"Connected with result code {reason_code}")
 
-mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-mqttc.on_connect = on_connect
-mqttc.connect(BROKER, 1883, 60)
-mqttc.loop_start()
-
 def on_message(client, userdata, msg):
     global state
     command = msg.payload.decode()
@@ -27,6 +22,18 @@ def on_message(client, userdata, msg):
         state = command
         logger.info(f"Lamp turned {state.lower()}")
         mqttc.publish(TOPIC_STATE, state)
+
+
+
+mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+mqttc.on_message = on_message
+mqttc.on_connect = on_connect
+mqttc.connect(BROKER, 1883, 60)
+mqttc.subscribe(TOPIC_CONTROL)
+mqttc.loop_start()
+
+
+
 
 while True:
     time.sleep(1)

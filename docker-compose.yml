@@ -31,5 +31,7 @@ services:
     build: ./fastapi-app
     ports:
         - "8000:8000"
+    volumes:
+     - ./fastapi-app/app:/app/app
     depends_on:
       - mqtt-broker
