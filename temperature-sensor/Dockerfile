@@ -4,8 +4,7 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY temperature_sensor.py .
-
-CMD ["python", "temperature_sensor.py"]
+# Uruchamiamy plik main.py / temperature_sensor.py - dostosuj nazwę
+CMD ["python", "main.py"]

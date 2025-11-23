@@ -1,3 +1,4 @@
+version: "3.8"
 services:
   mqtt-broker:
     image: eclipse-mosquitto:latest
@@ -5,31 +6,154 @@ services:
     ports:
       - "1883:1883"
     volumes:
-        - ./mqtt-broker/config:/mosquitto/config
+      - ./mqtt-broker/config:/mosquitto/config
 
-  temperature-sensor:
+  # Temperature sensors for 3 rooms (each instance gets ROOM env)
+  temp-room1:
     build: ./temperature-sensor
+    environment:
+      - ROOM=room1
     depends_on:
       - mqtt-broker
+    volumes:
+      - ./temperature-sensor:/app
 
-  light-sensor:
+  temp-room2:
+    build: ./temperature-sensor
+    environment:
+      - ROOM=room2
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./temperature-sensor:/app
+
+  temp-room3:
+    build: ./temperature-sensor
+    environment:
+      - ROOM=room3
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./temperature-sensor:/app
+
+  # Light sensors
+  light-room1:
     build: ./light-sensor
+    environment:
+      - ROOM=room1
     depends_on:
       - mqtt-broker
+    volumes:
+      - ./light-sensor:/app
 
-  actuator-fan:
+  light-room2:
+    build: ./light-sensor
+    environment:
+      - ROOM=room2
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./light-sensor:/app
+
+  light-room3:
+    build: ./light-sensor
+    environment:
+      - ROOM=room3
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./light-sensor:/app
+
+  # Fan actuators
+  fan-room1:
     build: ./actuator-fan
+    environment:
+      - ROOM=room1
     depends_on:
       - mqtt-broker
+    volumes:
+      - ./actuator-fan:/app
 
-  test:
-    build: ./test
+  fan-room2:
+    build: ./actuator-fan
+    environment:
+      - ROOM=room2
     depends_on:
       - mqtt-broker
+    volumes:
+      - ./actuator-fan:/app
 
+  fan-room3:
+    build: ./actuator-fan
+    environment:
+      - ROOM=room3
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./actuator-fan:/app
+
+  # Lamp actuators
+  lamp-room1:
+    build: ./actuator-lamp
+    environment:
+      - ROOM=room1
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./actuator-lamp:/app
+
+  lamp-room2:
+    build: ./actuator-lamp
+    environment:
+      - ROOM=room2
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./actuator-lamp:/app
+
+  lamp-room3:
+    build: ./actuator-lamp
+    environment:
+      - ROOM=room3
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./actuator-lamp:/app
+
+  # Door / motion sensor (one per room)
+  door-room1:
+    build: ./door
+    environment:
+      - ROOM=room1
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./door:/app
+
+  door-room2:
+    build: ./door
+    environment:
+      - ROOM=room2
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./door:/app
+
+  door-room3:
+    build: ./door
+    environment:
+      - ROOM=room3
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./door:/app
+
+  # Web app (aggregator) - single instance
   fastapi-app:
     build: ./fastapi-app
     ports:
-        - "8000:8000"
+      - "8000:8000"
     depends_on:
       - mqtt-broker
+    volumes:
+      - ./fastapi-app:/app
