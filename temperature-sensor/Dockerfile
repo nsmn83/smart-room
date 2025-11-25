@@ -6,6 +6,4 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY temperature_sensor.py .
-
 CMD ["python", "temperature_sensor.py"]

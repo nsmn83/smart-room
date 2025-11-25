@@ -5,28 +5,35 @@ import paho.mqtt.client as mqtt
 import logging
 from pathlib import Path
 
+# MQTT Broker
 BROKER = "mqtt-broker"
 
+# MQTT topics
 TOPIC_LIGHT = "sensors/light"
 TOPIC_TEMP = "sensors/temperature"
 TOPIC_FAN = "fan/control"
 TOPIC_LAMP = "lamp/control"
 TOPIC_FAN_STATE = "fan/state"
 TOPIC_LAMP_STATE = "lamp/state"
+TOPIC_TARGET_TEMP = "config/target_temp"
 
 BASE_DIR = Path(__file__).resolve().parent
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+logger = logging.getLogger("SensorDashboard")
 
 sensor_data = {
     "temperature": None,
     "light": None,
     "fan": "OFF",
-    "lamp": "OFF"
+    "lamp": "OFF",
+    "target_temp": 25.0
 }
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SensorDashboard")
 
-def on_connect(client, userdata, flags, reason_code, properties):
+app = FastAPI()
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
+
+def on_connect(client, userdata, flags, reason_code, properties=None):
     logger.info(f"Connected to MQTT broker with code {reason_code}")
     client.subscribe([
         (TOPIC_LIGHT, 0),
@@ -37,33 +44,35 @@ def on_connect(client, userdata, flags, reason_code, properties):
 
 def on_message(client, userdata, msg):
     topic = msg.topic
-    payload = msg.payload.decode()
-    result = ""
+    payload = msg.payload.decode().strip()
     if topic == TOPIC_TEMP:
-        sensor_data["temperature"] = payload
+        try:
+            sensor_data["temperature"] = float(payload)
+        except ValueError:
+            sensor_data["temperature"] = payload
     elif topic == TOPIC_LIGHT:
-        sensor_data["light"] = payload
+        try:
+            sensor_data["light"] = float(payload)
+        except ValueError:
+            sensor_data["light"] = payload
     elif topic == TOPIC_FAN_STATE:
         sensor_data["fan"] = payload
     elif topic == TOPIC_LAMP_STATE:
         sensor_data["lamp"] = payload
+    elif topic == TOPIC_FAN_STATE:
+        sensor_data["fan"] = payload
     logger.info(f"Received {topic}: {payload}")
 
-def on_publish(client, userdata, mid, reason_code, properties):
-    print(f"Message {mid} was successfully sent to broker")
-
-
+def on_publish(client, userdata, mid, reason_code, properties=None):
+    logger.info(f"Message {mid} published successfully")
 
 mqttc = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
-mqttc.on_publish = on_publish
 mqttc.on_connect = on_connect
 mqttc.on_message = on_message
+mqttc.on_publish = on_publish
 mqttc.connect(BROKER, 1883, 60)
 mqttc.loop_start()
 
-
-app = FastAPI()
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 @app.get("/")
 async def home(request: Request):
@@ -75,14 +84,24 @@ async def get_data():
 
 @app.post("/control")
 async def control(device: str = Form(...)):
-    result =""
     if device == "fan_on":
-        result = mqttc.publish(TOPIC_FAN, "ON")
+        mqttc.publish(TOPIC_FAN, "ON")
     elif device == "fan_off":
-        result = mqttc.publish(TOPIC_FAN, "OFF")
+        mqttc.publish(TOPIC_FAN, "OFF")
     elif device == "lamp_on":
-        result = mqttc.publish(TOPIC_LAMP, "ON")
+        mqttc.publish(TOPIC_LAMP, "ON")
     elif device == "lamp_off":
-        result = mqttc.publish(TOPIC_LAMP, "OFF")
-    logger.info(f"Sent command: {device}, r={result}")
+        mqttc.publish(TOPIC_LAMP, "OFF")
+    logger.info(f"Sent command: {device}")
     return {"status": "ok"}
+
+@app.post("/set_target")
+async def set_target_temp(target: str = Form(...)):
+    try:
+        val = float(target)
+        sensor_data["target_temp"] = val
+        mqttc.publish(TOPIC_TARGET_TEMP, str(val))
+        logger.info(f"Set target temperature to: {val}")
+        return {"status": "ok", "target": val}
+    except ValueError:
+        return {"status": "error", "message": "Invalid number"}

@@ -1,41 +1,221 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Sensor Dashboard</title>
+<meta charset="UTF-8">
+<title>Sensor Dashboard</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #add8e6;
+        margin: 0;
+        padding: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+    .device {
+        background: #d6d6d6;
+        border-radius: 20px;
+        padding: 30px;
+        width: 360px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    h1 {
+        text-align: center;
+        color: #333;
+        margin: 0 0 25px 0;
+        font-size: 1.8em;
+    }
+    .card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1em;
+        color: #777;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .data-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 1.1em;
+        color: #555;
+    }
+    .data-row:last-child { border: none; }
+    .data-value {
+        font-weight: bold;
+        color: #333;
+    }
+    .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .control-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1.1em;
+        background: white;
+        padding: 12px 16px;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        color: #555;
+    }
+    .input-group {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        align-items: center;
+    }
+    .input-group input {
+        width: 60px;
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        text-align: center;
+        font-size: 1em;
+    }
+    .btn-set {
+        background: #2196F3;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.3s;
+    }
+    .btn-set:hover { background: #1976D2; }
+    .switch {
+        position: relative;
+        width: 52px;
+        height: 28px;
+        display: inline-block;
+    }
+    .switch input { display: none; }
+    .slider {
+        position: absolute;
+        inset: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+        cursor: pointer;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #4CAF50; }
+    input:checked + .slider:before { transform: translateX(24px); }
+</style>
 </head>
 <body>
+
+<div class="device">
     <h1>Sensor Dashboard</h1>
-    <p>Temperature: <span id="temperature">--</span></p>
-    <p>Light: <span id="light">--</span></p>
-    <p>Fan state: <span id="fan">--</span></p>
-    <p>Lamp state: <span id="lamp">--</span></p>
 
-    <button onclick="sendCommand('fan_on')">Turn FAN ON</button>
-    <button onclick="sendCommand('fan_off')">Turn FAN OFF</button>
-    <button onclick="sendCommand('lamp_on')">Turn LAMP ON</button>
-    <button onclick="sendCommand('lamp_off')">Turn LAMP OFF</button>
+    <div class="card">
+        <h3>Odczyty</h3>
+        <div class="data-row">
+            <span>Temperatura</span>
+            <span class="data-value" id="val-temp">--</span>
+        </div>
+        <div class="data-row">
+            <span>Światło</span>
+            <span class="data-value" id="val-light">--</span>
+        </div>
+    </div>
 
-    <script>
-        async function fetchData() {
-            const res = await fetch("/data");
-            const data = await res.json();
-            document.getElementById("temperature").textContent = data.temperature;
-            document.getElementById("light").textContent = data.light;
-            document.getElementById("fan").textContent = data.fan;
-            document.getElementById("lamp").textContent = data.lamp;
-        }
+    <div class="card">
+        <h3>Automatyzacja Wiatraka</h3>
+        <div class="data-row" style="align-items: center;">
+            <span>Ustaw Cel (°C)</span>
+            <div class="input-group">
+                <input type="number" id="input-target" placeholder="25">
+                <button class="btn-set" onclick="updateTarget()">OK</button>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:10px; font-size:0.9em; color:#888;">
+            Obecny cel w systemie: <span id="val-target" style="font-weight:bold; color:#2196F3;">--</span>°C
+        </div>
+    </div>
 
-        async function sendCommand(cmd) {
-            await fetch("/control", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: "device=" + cmd
-            });
-            fetchData(); // odśwież stan po wysłaniu
-        }
+    <div class="controls">
+        <div class="control-item">
+            <span>Wiatrak (Status)</span>
+            <label class="switch">
+                <input type="checkbox" id="sw-fan" onchange="toggleDevice('fan', this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
 
-        setInterval(fetchData, 2000); // odświeżanie co 2 sekundy
-        fetchData(); // początkowe pobranie
-    </script>
+        <div class="control-item">
+            <span>Lampa</span>
+            <label class="switch">
+                <input type="checkbox" id="sw-lamp" onchange="toggleDevice('lamp', this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<script>
+async function toggleDevice(deviceType, isChecked) {
+    const command = deviceType + (isChecked ? "_on" : "_off");
+    const formData = new FormData();
+    formData.append('device', command);
+    try { await fetch('/control', { method: 'POST', body: formData }); }
+    catch (error) { console.error('Błąd sterowania:', error); }
+}
+
+async function updateTarget() {
+    const inputVal = document.getElementById('input-target').value;
+    if (!inputVal) return;
+    const formData = new FormData();
+    formData.append('target', inputVal);
+    try {
+        const res = await fetch('/set_target', { method: 'POST', body: formData });
+        await res.json();
+        fetchData();
+    } catch (error) { console.error('Błąd ustawiania celu:', error); }
+}
+
+async function fetchData() {
+    try {
+        const response = await fetch('/data');
+        const data = await response.json();
+        document.getElementById('val-temp').innerText = data.temperature ? data.temperature + "°C" : "--";
+        document.getElementById('val-light').innerText = data.light ? data.light + "%" : "--";
+        if (data.target_temp) { document.getElementById('val-target').innerText = data.target_temp; }
+        const fanSwitch = document.getElementById('sw-fan');
+        const lampSwitch = document.getElementById('sw-lamp');
+        if (data.fan === "ON" && !fanSwitch.checked) fanSwitch.checked = true;
+        if (data.fan === "OFF" && fanSwitch.checked) fanSwitch.checked = false;
+        if (data.lamp === "ON" && !lampSwitch.checked) lampSwitch.checked = true;
+        if (data.lamp === "OFF" && lampSwitch.checked) lampSwitch.checked = false;
+    } catch (error) { console.error('Błąd pobierania danych:', error); }
+}
+
+fetchData();
+setInterval(fetchData, 2000);
+</script>
+
 </body>
 </html>

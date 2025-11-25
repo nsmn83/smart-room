@@ -9,21 +9,29 @@ services:
 
   temperature-sensor:
     build: ./temperature-sensor
+    volumes:
+      - ./temperature-sensor:/app
     depends_on:
       - mqtt-broker
 
   light-sensor:
     build: ./light-sensor
+    volumes:
+      - ./light-sensor:/app
     depends_on:
       - mqtt-broker
 
   actuator-fan:
     build: ./actuator-fan
+    volumes:
+      - ./actuator-fan:/app
     depends_on:
       - mqtt-broker
 
-  test:
-    build: ./test
+  lamp-actuator:
+    build: ./lamp-actuator
+    volumes:
+      - ./lamp-actuator:/app
     depends_on:
       - mqtt-broker
 

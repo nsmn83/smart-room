@@ -5,6 +5,9 @@ import random
 
 BROKER = "mqtt-broker"
 TOPIC = "sensors/temperature"
+values = [10.0, 20.0, 30.0, 40.0, 50.0]
+index = 0
+index_two = 0
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Temperature sensor")
@@ -17,7 +20,8 @@ mqttc.on_connect = on_connect
 mqttc.connect(BROKER, 1883, 60)
 
 while True:
-    temperature = round(random.uniform(0.0, 30.0),2)
-    mqttc.publish(TOPIC, temperature)
-    logger.info(f"Published temperature: {temperature}°C")
-    time.sleep(2)
+    for value in values:
+        for _ in range(4):
+            mqttc.publish(TOPIC, value)
+            logger.info(f"Published temperature: {value}°C")
+            time.sleep(2)

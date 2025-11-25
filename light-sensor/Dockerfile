@@ -6,6 +6,4 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY light_sensor.py .
-
 CMD ["python", "light_sensor.py"]
