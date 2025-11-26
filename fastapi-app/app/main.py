@@ -113,16 +113,17 @@ def on_message(client, userdata, msg):
         sensor_data[room]["lamp"] = payload
     elif suffix == "door/state":
         sensor_data[room]["door"] = payload
-
+        logger.info(f"Received {topic}: {payload}")
         #Jeśli pokój pierwszy to włączamy alarm
         if room == "room1" and payload == "OPEN":
             mqttc.publish("room1/alarm/control", "TRIGGERED")
 
         #Jeśli zamykamy drzwi to uzbrajamy alarm
         if room == "room1" and payload == "CLOSED":
+            logger.info(f"Alarm uzbrajany bo drzwi zamknięte")
             mqttc.publish("room1/alarm/control", "ARMED")
 
-    logger.info(f"Received {topic}: {payload}")
+   # logger.info(f"Received {topic}: {payload}")
     apply_room_logic(room)
 
 
@@ -137,24 +138,24 @@ def apply_room_logic(room):
     if temp is not None:
         if temp > target and data["fan"] != "ON":
             mqttc.publish(t(room, "fan", "control"), "ON")
-            logger.info(f"AUTO[{room}]: Temp {temp} > {target} -> FAN ON")
+      #      logger.info(f"AUTO[{room}]: Temp {temp} > {target} -> FAN ON")
         elif temp <= target and data["fan"] != "OFF":
             mqttc.publish(t(room, "fan", "control"), "OFF")
-            logger.info(f"AUTO[{room}]: Temp {temp} <= {target} -> FAN OFF")
+      #      logger.info(f"AUTO[{room}]: Temp {temp} <= {target} -> FAN OFF")
 
     # light auto (when someone inside)
     if door == "OPEN" and light is not None:
         if light < 70 and data["lamp"] != "ON":
             mqttc.publish(t(room, "lamp", "control"), "ON")
-            logger.info(f"AUTO[{room}]: Light {light} < 70 & door OPEN -> LAMP ON")
+    #        logger.info(f"AUTO[{room}]: Light {light} < 70 & door OPEN -> LAMP ON")
         elif light >= 70 and data["lamp"] != "OFF":
             mqttc.publish(t(room, "lamp", "control"), "OFF")
-            logger.info(f"AUTO[{room}]: Light {light} >= 70 & door OPEN -> LAMP OFF")
+    #        logger.info(f"AUTO[{room}]: Light {light} >= 70 & door OPEN -> LAMP OFF")
 
     # if room empty -> lamp off
     if door == "CLOSED" and data["lamp"] != "OFF":
         mqttc.publish(t(room, "lamp", "control"), "OFF")
-        logger.info(f"AUTO[{room}]: Door CLOSED -> LAMP OFF")
+    #    logger.info(f"AUTO[{room}]: Door CLOSED -> LAMP OFF")
 
 
 # MQTT client
@@ -187,7 +188,9 @@ async def get_data():
 #Sterowanie alarmem
 @app.post("/disarm")
 async def disarm():
-    mqttc.publish("room1/alarm/status", "DISARM")
+
+    mqttc.publish("room1/alarm/control", "DISARM")
+    logger.info("ROZBROJENIE ALARMU - wysłano informacje do alarmu")
     return {"status": "disarmed"}
 
 # Sterowanie obecnością osoby w danym pomieszczeniu

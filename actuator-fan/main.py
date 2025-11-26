@@ -16,14 +16,14 @@ logger = logging.getLogger("Fan")
 
 def on_connect(client, userdata, flags, reason_code, properties):
     mqttc.subscribe(TOPIC_CONTROL, 0)
-    logger.info(f"Connected with result code {reason_code}")
+  #  logger.info(f"Connected with result code {reason_code}")
 
 def on_message(client, userdata, msg):
     global state
     command = msg.payload.decode()
     if command in ["ON", "OFF"]:
         state = command
-        logger.info(f"Fan turned {state.lower()}")
+   #     logger.info(f"Fan turned {state.lower()}")
         mqttc.publish(TOPIC_STATE, state)
 
 

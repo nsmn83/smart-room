@@ -25,7 +25,7 @@ def on_message(client, userdata, msg):
 
     if msg.topic == TOPIC_LAMP_STATE:
         lamp_on = (payload == "ON")
-        logger.info(f"Lamp state updated → {payload}")
+    #    logger.info(f"Lamp state updated → {payload}")
 
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -48,7 +48,7 @@ while True:
 
     lightness = min(lightness, 100)
     mqttc.publish(TOPIC_LIGHT, lightness)
-    logger.info(f"Published light level: {lightness}%")
+  #  logger.info(f"Published light level: {lightness}%")
 
     # przejście do kolejnego elementu
     index = (index + 1) % len(sequence)

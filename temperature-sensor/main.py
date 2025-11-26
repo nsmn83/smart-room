@@ -31,7 +31,7 @@ fan_cooling_rate = 1
 
 
 def on_connect(client, userdata, flags, reason_code, properties):
-    logger.info(f"Connected with result code {reason_code}")
+ #   logger.info(f"Connected with result code {reason_code}")
     client.subscribe(TOPIC_FAN_STATE)
 
 def on_message(client, userdata, msg):
@@ -39,7 +39,7 @@ def on_message(client, userdata, msg):
     payload = msg.payload.decode()
     if msg.topic == TOPIC_FAN_STATE:
         fan_on = (payload == "ON")
-        logger.info(f"Fan state updated → {payload}")
+   #     logger.info(f"Fan state updated → {payload}")
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 mqttc.on_connect = on_connect
@@ -56,13 +56,13 @@ while True:
         current_cooling = 0
         current_temperature = natural_temp
         idle_index = (idle_index + 1) % len(idle_sequence)
-        logger.info(f"Fan OFF → Publishing idle temperature: {current_temperature}°C")
+ #       logger.info(f"Fan OFF → Publishing idle temperature: {current_temperature}°C")
     else:
         # Wentylator włączony - stopniowo schładzamy
         if current_cooling < max_cooling:
             current_cooling += fan_cooling_rate
         current_temperature = max(natural_temp - current_cooling, 0)
-        logger.info(f"Fan ON → Room cooled by {current_cooling}°C, current temperature: {current_temperature}°C")
+ #       logger.info(f"Fan ON → Room cooled by {current_cooling}°C, current temperature: {current_temperature}°C")
 
     mqttc.publish(TOPIC_TEMP, current_temperature)
     time.sleep(2)
