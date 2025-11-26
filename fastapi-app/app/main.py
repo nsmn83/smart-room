@@ -67,7 +67,7 @@ def on_connect(client, userdata, flags, rc, properties=None):
             (t(room, "lamp", "state"), 0),
             (t(room, "door", "state"), 0),
         ]
-    subs += [("room1/alarm/trigger", 0)]
+    subs += [("room1/alarm/status", 0)]
     client.subscribe(subs)
     logger.info(f"Subscribed to {len(subs)} topics")
 
@@ -80,9 +80,24 @@ def on_message(client, userdata, msg):
     if len(parts) < 3:
         return
     room = parts[0]
-    if topic == "room1/alarm/trigger":
-        sensor_data["room1"]["alarm"] = "ALARM"
-        logger.info("ALARM TRIGGERED!")
+    if topic == "room1/alarm/status":
+        if payload == "ALARM":
+            sensor_data["room1"]["alarm"] = "ALARM"
+            logger.info("ALARM TRIGGERED!")
+
+        elif payload == "TRIGGERED":
+            sensor_data["room1"]["alarm"] = "TRIGGERED"
+            logger.info("Alarm countdown started")
+
+        elif payload == "ARMED":
+            sensor_data["room1"]["alarm"] = "ARMED"
+            logger.info("Alarm armed")
+
+        elif payload == "DISARMED":
+            sensor_data["room1"]["alarm"] = "DISARMED"
+            logger.info("Alarm disarmed")
+
+
         return
     if room not in sensor_data:
         return
@@ -101,7 +116,11 @@ def on_message(client, userdata, msg):
 
         #Jeśli pokój pierwszy to włączamy alarm
         if room == "room1" and payload == "OPEN":
-            mqttc.publish("room1/alarm/start", "START")
+            mqttc.publish("room1/alarm/control", "TRIGGERED")
+
+        #Jeśli zamykamy drzwi to uzbrajamy alarm
+        if room == "room1" and payload == "CLOSED":
+            mqttc.publish("room1/alarm/control", "ARMED")
 
     logger.info(f"Received {topic}: {payload}")
     apply_room_logic(room)
@@ -168,7 +187,7 @@ async def get_data():
 #Sterowanie alarmem
 @app.post("/disarm")
 async def disarm():
-    mqttc.publish("room1/alarm/disarm", "DISARM")
+    mqttc.publish("room1/alarm/status", "DISARM")
     return {"status": "disarmed"}
 
 # Sterowanie obecnością osoby w danym pomieszczeniu

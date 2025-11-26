@@ -42,6 +42,17 @@
       animation: alarmBlink 1s infinite;
   }
 
+  /* 🔴 Migające kółko alarmu */
+  @keyframes alarmStartBlink {
+      0% { fill: yellow; }
+      50% { fill: white; }
+      100% { fill: yellow; }
+  }
+
+  .alarm-started {
+      animation: alarmStartBlink 1s infinite;
+  }
+
   .container {
     display: flex;
     gap: 20px;
@@ -219,15 +230,18 @@ async function disarmAlarm(e) {
     fetchData();
 }
 
-/* 🔴 Migający alarm indicator */
+/* Migający alarm indicator */
 function updateAlarmIndicator(state) {
     const circle = document.getElementById("alarmCircle");
 
     if (state === "ALARM") {
         circle.classList.add("alarm-active");
-    } else {
+    } else if(state === "COUNTDOWN"){
+		circle.classList.add("alarm-started");
+	}else {
         circle.classList.remove("alarm-active");
-        circle.style.fill = "gray";
+		circle.classList.remove("alarm-started");
+        circle.style.fill = "brown";
     }
 }
 
