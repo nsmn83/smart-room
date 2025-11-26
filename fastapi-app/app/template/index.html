@@ -31,7 +31,7 @@
     pointer-events: none;
   }
 
-  /* 🔴 Migające kółko alarmu */
+  /* Migające kółko alarmu */
   @keyframes alarmBlink {
       0% { fill: red; }
       50% { fill: white; }
@@ -42,7 +42,7 @@
       animation: alarmBlink 1s infinite;
   }
 
-  /* 🔴 Migające kółko alarmu */
+  /* Migające kółko alarmu */
   @keyframes alarmStartBlink {
       0% { fill: yellow; }
       50% { fill: white; }
@@ -88,7 +88,7 @@
       {% if r == "room1" %}
       <p style="font-weight:bold; color:red;">Alarm: <span id="room1_alarm">{{ sensor_data["room1"].alarm }}</span></p>
 
-      <!-- 🔴 PRZYCISK WYŁĄCZ ALARM -->
+      <!-- PRZYCISK WYŁĄCZ ALARM -->
       <form onsubmit="disarmAlarm(event)">
         <button type="submit" style="background:red; color:white;">WYŁĄCZ ALARM</button>
       </form>
@@ -128,9 +128,9 @@
       <!-- Drzwi kuchnia - sypialnia -->
       <line x1="350" y1="160" x2="350" y2="170" class="door"/>
 
-      <!-- 🔴 ALARM – migające kółko -->
-      <circle id="alarmCircle" cx="230" cy="40" r="15" fill="gray"/>
-      <text x="230" y="40">A</text>
+      <!-- ALARM – migające kółko -->
+      <circle id="alarmCircle" cx="210" cy="40" r="15" fill="gray"/>
+      <text x="210" y="40">A</text>
 
       <circle class="sensor" id="door1" cx="125" cy="10" r="12"/>
       <text x="125" y="10">D</text>
@@ -195,11 +195,13 @@ async function fetchData() {
 
         document.getElementById(r + 'fan').setAttribute('fill', data[r].fan === 'ON' ? 'green' : 'red');
         document.getElementById(r + 'light').setAttribute('fill', data[r].lamp === 'ON' ? 'green' : 'red');
-
+        if (r === "room1") {
+          document.getElementById("room1_alarm").textContent = data["room1"].alarm;
+        }
         updateRoomColors(data[r], r);
     });
 
-    // 🔴 Alarm indicator update
+    // Alarm indicator update
     updateAlarmIndicator(data["room1"].alarm);
 }
 
@@ -230,7 +232,7 @@ async function disarmAlarm(e) {
     fetchData();
 }
 
-/* Migający alarm indicator */
+/* Migający alarm - indykator */
 function updateAlarmIndicator(state) {
     const circle = document.getElementById("alarmCircle");
 

@@ -116,12 +116,12 @@ def on_message(client, userdata, msg):
         logger.info(f"Received {topic}: {payload}")
         #Jeśli pokój pierwszy to włączamy alarm
         if room == "room1" and payload == "OPEN":
-            mqttc.publish("room1/alarm/control", "TRIGGERED")
+            mqttc.publish("room1/alarm/control", "TRIGGER")
 
         #Jeśli zamykamy drzwi to uzbrajamy alarm
         if room == "room1" and payload == "CLOSED":
             logger.info(f"Alarm uzbrajany bo drzwi zamknięte")
-            mqttc.publish("room1/alarm/control", "ARMED")
+            mqttc.publish("room1/alarm/control", "ARM")
 
    # logger.info(f"Received {topic}: {payload}")
     apply_room_logic(room)
