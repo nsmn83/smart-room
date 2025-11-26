@@ -54,14 +54,23 @@
   }
 
   .container {
-    display: flex;
+     display: flex;
+    flex-wrap: wrap;
     gap: 20px;
     align-items: flex-start;
-    width: 1200px;
+    width: 100%;
     margin-top: 50px;
+
   }
+  .settings section {
+    flex: 0 0 calc(20% - 20px);
+    box-sizing: border-box;
+}
   .settings {
-    width: 800px;
+    display: flex;
+    flex-wrap: wrap;
+	width: 1000px;
+    gap: 20px;
   }
   .svg-container {
     flex-grow: 1;
@@ -71,10 +80,10 @@
     <title>Sensor Dashboard</title>
 </head>
 <body>
-
+<h1>Multiroom Dashboard</h1>
 <div class="container">
   <div class="settings">
-    <h1>Multiroom Dashboard</h1>
+
 
     {% for r in rooms %}
     <section style="border:1px solid #ccc; padding:10px; margin:10px;">
