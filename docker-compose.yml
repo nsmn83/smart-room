@@ -8,7 +8,7 @@ services:
     volumes:
       - ./mqtt-broker/config:/mosquitto/config
 
-  # Temperature sensors for 3 rooms (each instance gets ROOM env)
+  # Czujniki temp w pomieszczeniu
   temp-room1:
     build: ./temperature-sensor
     environment:
@@ -36,7 +36,7 @@ services:
     volumes:
       - ./temperature-sensor:/app
 
-  # Light sensors
+  # Czujniki jasności w pomieszczeniu
   light-room1:
     build: ./light-sensor
     environment:
@@ -64,7 +64,7 @@ services:
     volumes:
       - ./light-sensor:/app
 
-  # Fan actuators
+  # Wentylatory w pomieszczeniu
   fan-room1:
     build: ./actuator-fan
     environment:
@@ -92,7 +92,7 @@ services:
     volumes:
       - ./actuator-fan:/app
 
-  # Lamp actuators
+  # Lampy w pomieszczeniu
   lamp-room1:
     build: ./actuator-lamp
     environment:
@@ -120,7 +120,7 @@ services:
     volumes:
       - ./actuator-lamp:/app
 
-  # Door / motion sensor (one per room)
+  # Czujnik ruchu - 1 na pomieszczenie
   door-room1:
     build: ./door
     environment:
@@ -148,7 +148,17 @@ services:
     volumes:
       - ./door:/app
 
-  # Web app (aggregator) - single instance
+  # Alarm w pomieszczeniu numer 1
+  alarm-room1:
+    build: ./alarm
+    environment:
+      - ROOM=room1
+    depends_on:
+      - mqtt-broker
+    volumes:
+      - ./alarm:/app
+
+  #Aplikacja webowa
   fastapi-app:
     build: ./fastapi-app
     ports:

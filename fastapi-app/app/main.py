@@ -9,18 +9,17 @@ import paho.mqtt.client as mqtt
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
 
-# lista pokojów
+# lista pokoi - każy ma czujnik ruchu, lampe, wentylator oraz sensory - temperatury i jasności
 ROOMS = ["room1", "room2", "room3"]
-
 BROKER = "mqtt-broker"
 
 
-# topic helpers (per-room)
+#Funkcja pomocnicza do ustawienia nazyw tematów MQTT
 def t(room, *parts):
     return "/".join([room] + list(parts))
 
 
-# initial sensor_data structure
+#Początkowe wartości sensorów i urządzeń w pomieszczeniu
 sensor_data = {}
 for r in ROOMS:
     sensor_data[r] = {
@@ -28,15 +27,16 @@ for r in ROOMS:
         "light": None,
         "fan": "OFF",
         "lamp": "OFF",
-        "door": "CLOSED"
+        "door": "CLOSED",
+        "alarm": "SAFE"
     }
 
 
-# config structure: per-room target_temperature
+# Ustawienie docelowaj temperatury dla pokoi
 def load_config():
     if not os.path.exists(CONFIG_PATH):
         # default config with realistic temperatures
-        cfg = {r: {"target_temperature": 22} for r in ROOMS}  # FIXED: Realistic temp
+        cfg = {r: {"target_temperature": 22} for r in ROOMS}
         with open(CONFIG_PATH, "w") as f:
             json.dump(cfg, f, indent=4)
         return cfg
@@ -67,6 +67,7 @@ def on_connect(client, userdata, flags, rc, properties=None):
             (t(room, "lamp", "state"), 0),
             (t(room, "door", "state"), 0),
         ]
+    subs += [("room1/alarm/trigger", 0)]
     client.subscribe(subs)
     logger.info(f"Subscribed to {len(subs)} topics")
 
@@ -79,10 +80,13 @@ def on_message(client, userdata, msg):
     if len(parts) < 3:
         return
     room = parts[0]
+    if topic == "room1/alarm/trigger":
+        sensor_data["room1"]["alarm"] = "ALARM"
+        logger.info("ALARM TRIGGERED!")
+        return
     if room not in sensor_data:
         return
 
-    # map topic suffix to sensor_data
     suffix = "/".join(parts[1:])
     if suffix == "sensors/temperature":
         sensor_data[room]["temperature"] = payload
@@ -95,11 +99,14 @@ def on_message(client, userdata, msg):
     elif suffix == "door/state":
         sensor_data[room]["door"] = payload
 
+        #Jeśli pokój pierwszy to włączamy alarm
+        if room == "room1" and payload == "OPEN":
+            mqttc.publish("room1/alarm/start", "START")
+
     logger.info(f"Received {topic}: {payload}")
     apply_room_logic(room)
 
 
-# automatic room logic for single room
 def apply_room_logic(room):
     data = sensor_data[room]
     temp = float(data["temperature"]) if data["temperature"] else None
@@ -131,7 +138,7 @@ def apply_room_logic(room):
         logger.info(f"AUTO[{room}]: Door CLOSED -> LAMP OFF")
 
 
-# MQTT client - FIXED: Added API version
+# MQTT client
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 mqttc.on_connect = on_connect
 mqttc.on_message = on_message
@@ -145,7 +152,7 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "template"))
 
 @app.get("/")
 async def home(request: Request):
-    # pass sensor_data and config to template
+    #Przesłanie danych z sensorów do szablonu
     return templates.TemplateResponse("index.html", {
         "request": request,
         "sensor_data": sensor_data,
@@ -158,8 +165,13 @@ async def home(request: Request):
 async def get_data():
     return JSONResponse(sensor_data)
 
+#Sterowanie alarmem
+@app.post("/disarm")
+async def disarm():
+    mqttc.publish("room1/alarm/disarm", "DISARM")
+    return {"status": "disarmed"}
 
-# FIXED: Changed parameter from 'action' to 'device' and added fan/lamp control
+# Sterowanie obecnością osoby w danym pomieszczeniu
 @app.post("/control")
 async def control(room: str = Form(...), device: str = Form(...)):
     if room not in ROOMS:
@@ -174,29 +186,8 @@ async def control(room: str = Form(...), device: str = Form(...)):
         mqttc.publish(t(room, "door", "control"), "CLOSED")
         return {"status": "ok", "action": "door_close"}
 
-    # Fan control - FIXED: Added manual fan control
-    elif device == "fan_on":
-        mqttc.publish(t(room, "fan", "control"), "ON")
-        return {"status": "ok", "action": "fan_on"}
 
-    elif device == "fan_off":
-        mqttc.publish(t(room, "fan", "control"), "OFF")
-        return {"status": "ok", "action": "fan_off"}
-
-    # Lamp control - FIXED: Added manual lamp control
-    elif device == "lamp_on":
-        mqttc.publish(t(room, "lamp", "control"), "ON")
-        return {"status": "ok", "action": "lamp_on"}
-
-    elif device == "lamp_off":
-        mqttc.publish(t(room, "lamp", "control"), "OFF")
-        return {"status": "ok", "action": "lamp_off"}
-
-    else:
-        return {"error": "invalid device action"}
-
-
-# set per-room target temp
+#Ustawienie temperatury w danym pomieszczeniu
 @app.post("/set-config")
 async def set_config(room: str = Form(...), target_temperature: int = Form(...)):
     if room not in ROOMS:

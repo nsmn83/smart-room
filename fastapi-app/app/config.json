@@ -1,9 +1,9 @@
 {
     "room1": {
-        "target_temperature": 22
+        "target_temperature": 1
     },
     "room2": {
-        "target_temperature": 23
+        "target_temperature": 20
     },
     "room3": {
         "target_temperature": 24

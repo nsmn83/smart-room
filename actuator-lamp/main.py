@@ -7,7 +7,7 @@ ROOM = os.environ.get("ROOM","room1")
 
 BROKER = "mqtt-broker"
 TOPIC_CONTROL = f"{ROOM}/lamp/control"
-TOPIC_STATE = f"{ROOM}/lamp/state"  # FIXED: Added missing slash
+TOPIC_STATE = f"{ROOM}/lamp/state"
 
 state = "OFF"
 
@@ -33,4 +33,4 @@ mqttc.connect(BROKER, 1883, 60)
 mqttc.loop_start()
 
 while True:
-    time.sleep(1)
+    time.sleep(2)

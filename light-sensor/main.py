@@ -6,7 +6,7 @@ import os
 ROOM = os.environ.get("ROOM","room1")
 BROKER = "mqtt-broker"
 TOPIC_LIGHT = f"{ROOM}/sensors/light"
-TOPIC_LAMP_STATE = f"{ROOM}/lamp/state"  # FIXED: Added missing slash
+TOPIC_LAMP_STATE = f"{ROOM}/lamp/state"
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Light sensor")
@@ -53,4 +53,4 @@ while True:
     # przejście do kolejnego elementu
     index = (index + 1) % len(sequence)
 
-    time.sleep(1)
+    time.sleep(2)

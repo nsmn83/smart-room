@@ -5,8 +5,8 @@ import os
 
 ROOM = os.environ.get("ROOM","room1")
 BROKER = "mqtt-broker"
-TOPIC_CONTROL = f"{ROOM}/door/control"  # FIXED: Changed from movement to door
-TOPIC_STATE = f"{ROOM}/door/state"      # FIXED: Changed from movement to door
+TOPIC_CONTROL = f"{ROOM}/door/control"
+TOPIC_STATE = f"{ROOM}/door/state"
 
 state = "CLOSED"
 
@@ -16,7 +16,6 @@ logger = logging.getLogger("Door")
 def on_connect(client, userdata, flags, reason_code, properties):
     mqttc.subscribe(TOPIC_CONTROL, 0)
     logger.info(f"Connected with result code {reason_code}")
-    # Publish initial state
     mqttc.publish(TOPIC_STATE, state)
 
 def on_message(client, userdata, msg):
@@ -34,4 +33,4 @@ mqttc.connect(BROKER, 1883, 60)
 mqttc.loop_start()
 
 while True:
-    time.sleep(1)
+    time.sleep(2)
